@@ -2,11 +2,15 @@ package com.demo.shop.repository;
 
 import com.demo.shop.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+
+import javax.transaction.Transactional;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
@@ -45,4 +49,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     
     @Query(value ="select count(*) from Product p where status = :status", nativeQuery = true)
     Integer CountProduct(Integer status);
+    
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE Product p SET p.quantity = :quantity WHERE p.id = :productId")
+    void updateQuantity(@Param("quantity") Integer quatity, @Param("productId") Integer productId);
 }

@@ -56,6 +56,9 @@ public class Product {
 
 	@Column(name = "image")
 	private String image;
+	
+	@Column(name = "quantity")
+	private Integer quantity;
 
 
 	public Integer getId() {
@@ -159,4 +162,13 @@ public class Product {
 	public void setImage(String image) {
 		this.image = image;
 	}
+
+	public Integer getQuantity() {
+		return quantity;
+	}
+
+	public void setQuantity(Integer quantity) {
+		this.quantity = quantity;
+	}
+	
 }
