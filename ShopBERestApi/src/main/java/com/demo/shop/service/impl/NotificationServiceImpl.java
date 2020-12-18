@@ -47,30 +47,5 @@ public class NotificationServiceImpl implements NotificationService {
 		return notificationResponses;
 	}
 
-	@Scheduled(cron = "0 03 14 * * ?")
-	void someJob() throws Exception {
-		List<Product> list = productRepository.findByStatus(StatusConstant.STATUS_ACTIVE);
-
-		for (Product produt : list) {
-			Notification notification = new Notification();
-			Date dateNow = new Date();
-			LocalDateTime createdDate = produt.getCreatedDate();
-			DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
-			String formattedDateTime = createdDate.format(formatter);
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			Date date = sdf.parse(formattedDateTime);
-			long millis = date.getTime();
-			long getDiff = dateNow.getTime() - millis;
-			long getDaysDiff = TimeUnit.MILLISECONDS.toHours(getDiff);
-			if (getDaysDiff > 0 && getDaysDiff < 48) {
-				notification.setDescriptions("Sản phẩm " + produt.getProductName() + " còn " + getDaysDiff + " giờ là hết hạn");
-				notification.setStorageTime((int) getDaysDiff);
-				notification.setCreateDate(dateNow);
-				notification.setProductId(produt.getId());
-				notificationRepository.save(notification);
-
-			}
-		}
-
-	}
+	
 }

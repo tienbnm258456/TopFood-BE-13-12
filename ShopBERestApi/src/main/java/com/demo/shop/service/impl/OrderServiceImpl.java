@@ -5,14 +5,17 @@ import com.demo.shop.config.PaypalPaymentMethod;
 import com.demo.shop.constant.StatusConstant;
 import com.demo.shop.entity.Order;
 import com.demo.shop.entity.OrderDetail;
+import com.demo.shop.entity.Product;
 import com.demo.shop.repository.CartRepository;
 import com.demo.shop.repository.OrderDetailRepository;
 import com.demo.shop.repository.OrderRepository;
+import com.demo.shop.repository.ProductRepository;
 import com.demo.shop.request.OrderDetailRequest;
 import com.demo.shop.request.OrderLocalRequest;
 import com.demo.shop.request.OrderRequest;
 import com.demo.shop.response.OrderResponse;
 import com.demo.shop.response.RevenueResponse;
+import com.demo.shop.service.EmailService;
 import com.demo.shop.service.OrderService;
 import com.paypal.api.payments.*;
 import com.paypal.base.rest.APIContext;
@@ -34,23 +37,30 @@ public class OrderServiceImpl implements OrderService {
 
 	final CartRepository cartRepository;
 
+	final ProductRepository productRepository;
+
+	final EmailService emailService;
+
 	private final APIContext apiContext;
 
-	public OrderServiceImpl(APIContext apiContext, OrderDetailRepository orderDetailRepository, OrderRepository orderRepository, CartRepository cartRepository) {
+	public OrderServiceImpl(APIContext apiContext, OrderDetailRepository orderDetailRepository,
+			OrderRepository orderRepository, CartRepository cartRepository, ProductRepository productRepository,
+			EmailService emailService) {
 		this.apiContext = apiContext;
 		this.orderDetailRepository = orderDetailRepository;
 		this.orderRepository = orderRepository;
 		this.cartRepository = cartRepository;
+		this.productRepository = productRepository;
+		this.emailService = emailService;
 	}
 
 	@Override
 	@Transactional
-	public String createPayment(HttpServletRequest httpRequest, OrderRequest orderRequest)
-			throws PayPalRESTException {
+	public String createPayment(HttpServletRequest httpRequest, OrderRequest orderRequest) throws PayPalRESTException {
 
 		Double price = Double.valueOf(orderRequest.getPrice()) / 23000;
-		Payment payment = create(price, orderRequest.getDescription(),
-				orderRequest.getCancelUrl(), orderRequest.getSuccessUrl());
+		Payment payment = create(price, orderRequest.getDescription(), orderRequest.getCancelUrl(),
+				orderRequest.getSuccessUrl());
 		if (payment != null) {
 			Order order = new Order();
 			order.setStatus(StatusConstant.ORDER_PENDING);
@@ -81,8 +91,7 @@ public class OrderServiceImpl implements OrderService {
 		throw new PayPalRESTException("create payment fail");
 	}
 
-	private Payment create(Double price, String description,
-						   String cancelUrl, String successUrl)
+	private Payment create(Double price, String description, String cancelUrl, String successUrl)
 			throws PayPalRESTException {
 
 		Amount amount = new Amount();
@@ -153,6 +162,10 @@ public class OrderServiceImpl implements OrderService {
 				orderDetail.setProductId(orderDetailRequest.getProductId());
 				orderDetail.setQuantity(orderDetailRequest.getQuantity());
 				orderDetails.add(orderDetail);
+				Product product = productRepository
+						.findByIdAndStatus(orderDetailRequest.getProductId(), StatusConstant.STATUS_ACTIVE).get();
+				productRepository.updateQuantity(product.getQuantity() - orderDetailRequest.getQuantity(),
+						orderDetailRequest.getProductId());
 			}
 			orderDetailRepository.saveAll(orderDetails);
 		}
